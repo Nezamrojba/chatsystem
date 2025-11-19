@@ -6,6 +6,15 @@ use App\Http\Controllers\Api\ConversationController;
 use App\Http\Controllers\Api\MessageController;
 use Illuminate\Support\Facades\Route;
 
+// Public health check endpoint
+Route::get('health', function () {
+    return response()->json([
+        'status' => 'ok',
+        'timestamp' => now()->toIso8601String(),
+        'service' => 'Mazen Maher Chat API'
+    ]);
+});
+
 // Public auth routes
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
