@@ -3,12 +3,19 @@ set -e
 
 echo "Starting application setup..."
 
+# Debug: Show available MySQL-related environment variables
+echo "Checking for MySQL variables..."
+echo "MYSQLHOST=${MYSQLHOST:-not set}"
+echo "MYSQL_HOST=${MYSQL_HOST:-not set}"
+echo "MYSQL_URL=${MYSQL_URL:-not set}"
+echo "DB_HOST=${DB_HOST:-not set}"
+
 # Parse Railway MySQL configuration
 # Check if DB_HOST is already set, if not, try to get from Railway variables
 if [ -z "$DB_HOST" ]; then
     # Try Railway individual variables first (most reliable)
     if [ -n "$MYSQLHOST" ]; then
-        echo "Detected Railway MySQL individual variables..."
+        echo "Detected Railway MySQL individual variables (MYSQLHOST)..."
         export DB_CONNECTION=${DB_CONNECTION:-mysql}
         export DB_HOST=$MYSQLHOST
         export DB_PORT=${MYSQLPORT:-3306}
