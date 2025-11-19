@@ -3,26 +3,36 @@ set -e
 
 echo "Starting application setup..."
 
-# Parse Railway MySQL URL if provided
-if [ -n "$MYSQL_URL" ] && [ -z "$DB_HOST" ]; then
-    echo "Detected Railway MySQL URL, parsing connection details..."
-    # MYSQL_URL format: mysql://user:password@host:port/database
-    # Extract components using sed
-    MYSQL_USER=$(echo "$MYSQL_URL" | sed -n 's|.*://\([^:]*\):.*|\1|p')
-    MYSQL_PASS=$(echo "$MYSQL_URL" | sed -n 's|.*://[^:]*:\([^@]*\)@.*|\1|p')
-    MYSQL_HOST=$(echo "$MYSQL_URL" | sed -n 's|.*@\([^:]*\):.*|\1|p')
-    MYSQL_PORT=$(echo "$MYSQL_URL" | sed -n 's|.*:\([0-9]*\)/.*|\1|p')
-    MYSQL_DB=$(echo "$MYSQL_URL" | sed -n 's|.*/\([^?]*\).*|\1|p')
-    
-    # Set environment variables if not already set
-    export DB_CONNECTION=${DB_CONNECTION:-mysql}
-    export DB_HOST=${DB_HOST:-$MYSQL_HOST}
-    export DB_PORT=${DB_PORT:-$MYSQL_PORT}
-    export DB_DATABASE=${DB_DATABASE:-$MYSQL_DB}
-    export DB_USERNAME=${DB_USERNAME:-$MYSQL_USER}
-    export DB_PASSWORD=${DB_PASSWORD:-$MYSQL_PASS}
-    
-    echo "MySQL connection configured from Railway: $MYSQL_HOST:$MYSQL_PORT/$MYSQL_DB"
+# Parse Railway MySQL configuration
+if [ -z "$DB_HOST" ]; then
+    # Try Railway individual variables first
+    if [ -n "$MYSQLHOST" ] || [ -n "$MYSQL_HOST" ]; then
+        echo "Detected Railway MySQL individual variables..."
+        export DB_CONNECTION=${DB_CONNECTION:-mysql}
+        export DB_HOST=${MYSQLHOST:-$MYSQL_HOST}
+        export DB_PORT=${MYSQLPORT:-${MYSQL_PORT:-3306}}
+        export DB_DATABASE=${MYSQLDATABASE:-${MYSQL_DATABASE:-railway}}
+        export DB_USERNAME=${MYSQLUSER:-${MYSQL_USER:-root}}
+        export DB_PASSWORD=${MYSQLPASSWORD:-${MYSQL_PASSWORD:-$MYSQL_ROOT_PASSWORD}}
+        echo "MySQL connection configured from Railway variables: $DB_HOST:$DB_PORT/$DB_DATABASE"
+    # Fallback to parsing MYSQL_URL
+    elif [ -n "$MYSQL_URL" ]; then
+        echo "Detected Railway MySQL URL, parsing connection details..."
+        # MYSQL_URL format: mysql://user:password@host:port/database
+        MYSQL_USER=$(echo "$MYSQL_URL" | sed -n 's|.*://\([^:]*\):.*|\1|p')
+        MYSQL_PASS=$(echo "$MYSQL_URL" | sed -n 's|.*://[^:]*:\([^@]*\)@.*|\1|p')
+        MYSQL_HOST=$(echo "$MYSQL_URL" | sed -n 's|.*@\([^:]*\):.*|\1|p')
+        MYSQL_PORT=$(echo "$MYSQL_URL" | sed -n 's|.*:\([0-9]*\)/.*|\1|p')
+        MYSQL_DB=$(echo "$MYSQL_URL" | sed -n 's|.*/\([^?]*\).*|\1|p')
+        
+        export DB_CONNECTION=${DB_CONNECTION:-mysql}
+        export DB_HOST=$MYSQL_HOST
+        export DB_PORT=${MYSQL_PORT:-3306}
+        export DB_DATABASE=$MYSQL_DB
+        export DB_USERNAME=$MYSQL_USER
+        export DB_PASSWORD=$MYSQL_PASS
+        echo "MySQL connection configured from Railway URL: $MYSQL_HOST:$MYSQL_PORT/$MYSQL_DB"
+    fi
 fi
 
 # Wait for database to be ready (with timeout)
