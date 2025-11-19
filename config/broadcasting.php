@@ -15,7 +15,9 @@ return [
     |
     */
 
-    'default' => env('BROADCAST_CONNECTION', env('REVERB_APP_KEY') ? 'reverb' : 'null'),
+    // Always default to 'null' unless explicitly set
+    // This prevents errors when Reverb is not configured
+    'default' => env('BROADCAST_CONNECTION', 'null'),
 
     /*
     |--------------------------------------------------------------------------

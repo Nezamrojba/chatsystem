@@ -83,19 +83,24 @@ fi
 # Create storage link
 php artisan storage:link || echo "Storage link already exists or failed"
 
-# Cache configuration (only in production) - skip if Reverb not configured to avoid errors
+# Cache configuration (only in production)
 if [ "$APP_ENV" = "production" ]; then
     echo "Caching configuration..."
-    # Only cache if Reverb is configured, otherwise skip to avoid errors
+    # Clear old config cache first to avoid stale 'reverb' default
+    php artisan config:clear 2>/dev/null || true
+    # Set BROADCAST_CONNECTION to null if not set and Reverb not configured
+    if [ -z "$BROADCAST_CONNECTION" ] && [ -z "$REVERB_APP_KEY" ]; then
+        export BROADCAST_CONNECTION=null
+    fi
+    # Cache config (will use null broadcaster if Reverb not configured)
+    php artisan config:cache || echo "Config cache failed (continuing anyway)"
+    php artisan route:cache || echo "Route cache failed (continuing anyway)"
+    php artisan view:cache || echo "View cache failed (continuing anyway)"
+    # Skip event cache if Reverb not configured (events might try to broadcast)
     if [ -n "$REVERB_APP_KEY" ]; then
-        php artisan config:cache || echo "Config cache failed (Reverb may not be configured)"
-        php artisan route:cache || echo "Route cache failed"
-        php artisan view:cache || echo "View cache failed"
-        php artisan event:cache || echo "Event cache failed"
+        php artisan event:cache || echo "Event cache failed (continuing anyway)"
     else
-        echo "Skipping config cache (Reverb not configured - this is OK)"
-        php artisan route:cache || echo "Route cache failed"
-        php artisan view:cache || echo "View cache failed"
+        echo "Skipping event cache (Reverb not configured - this is OK)"
     fi
 fi
 
