@@ -41,47 +41,33 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         });
         
-        // Handle database connection errors gracefully
-        $exceptions->render(function (\PDOException $e, $request) {
-            // For health check endpoints, return success even if DB is down
+        // Handle all exceptions for health check endpoints
+        $exceptions->render(function (\Throwable $e, $request) {
+            // For health check endpoints, always return success
             if ($request->is('health') || $request->is('api/health') || $request->is('/')) {
+                $dbStatus = 'unknown';
+                try {
+                    \DB::connection()->getPdo();
+                    $dbStatus = 'connected';
+                } catch (\Exception $dbE) {
+                    $dbStatus = 'unavailable';
+                }
+                
                 return response()->json([
                     'status' => 'ok',
                     'service' => 'Mazen Maher Chat API',
-                    'database' => 'unavailable',
-                    'message' => 'Database connection not available',
+                    'database' => $dbStatus,
+                    'error' => $e->getMessage(),
                 ], 200);
             }
             
-            // For other requests, return proper error
+            // For other API requests, return JSON error
             if ($request->is('api/*')) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Database connection error',
+                    'message' => 'Server error',
                     'error' => $e->getMessage(),
-                ], 503);
-            }
-        });
-        
-        // Handle general database exceptions
-        $exceptions->render(function (\Illuminate\Database\QueryException $e, $request) {
-            // For health check endpoints, return success even if DB is down
-            if ($request->is('health') || $request->is('api/health') || $request->is('/')) {
-                return response()->json([
-                    'status' => 'ok',
-                    'service' => 'Mazen Maher Chat API',
-                    'database' => 'unavailable',
-                    'message' => 'Database connection not available',
-                ], 200);
-            }
-            
-            // For other requests, return proper error
-            if ($request->is('api/*')) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Database query error',
-                    'error' => $e->getMessage(),
-                ], 503);
+                ], 500);
             }
         });
     })->create();

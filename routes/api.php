@@ -8,22 +8,20 @@ use Illuminate\Support\Facades\Route;
 
 // Public health check endpoint
 Route::get('health', function () {
+    $dbStatus = 'unknown';
     try {
-        return response()->json([
-            'status' => 'ok',
-            'timestamp' => now()->toIso8601String(),
-            'service' => 'Mazen Maher Chat API',
-            'database' => \DB::connection()->getPdo() ? 'connected' : 'unavailable',
-        ]);
+        \DB::connection()->getPdo();
+        $dbStatus = 'connected';
     } catch (\Exception $e) {
-        return response()->json([
-            'status' => 'ok',
-            'timestamp' => now()->toIso8601String(),
-            'service' => 'Mazen Maher Chat API',
-            'database' => 'unavailable',
-            'message' => 'Database connection not configured',
-        ]);
+        $dbStatus = 'unavailable';
     }
+    
+    return response()->json([
+        'status' => 'ok',
+        'timestamp' => now()->toIso8601String(),
+        'service' => 'Mazen Maher Chat API',
+        'database' => $dbStatus,
+    ]);
 });
 
 // Public auth routes
