@@ -12,11 +12,6 @@ return Application::configure(basePath: dirname(__DIR__))
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
     )
-    ->withTrustedHosts([
-        'healthcheck.railway.app',
-        env('APP_URL'),
-        '*', // Allow all in production for Railway
-    ])
     ->withMiddleware(function (Middleware $middleware): void {
         // CORS and Sanctum must be first
         $middleware->api(prepend: [
