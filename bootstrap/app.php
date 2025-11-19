@@ -43,8 +43,10 @@ return Application::configure(basePath: dirname(__DIR__))
         
         // Handle all exceptions for health check endpoints
         $exceptions->render(function (\Throwable $e, $request) {
+            $path = $request->path();
+            
             // For health check endpoints, always return success
-            if ($request->is('health') || $request->is('api/health') || $request->is('/')) {
+            if ($path === 'health' || $path === 'api/health' || $path === '') {
                 $dbStatus = 'unknown';
                 try {
                     \DB::connection()->getPdo();
@@ -62,7 +64,7 @@ return Application::configure(basePath: dirname(__DIR__))
             }
             
             // For other API requests, return JSON error
-            if ($request->is('api/*')) {
+            if (str_starts_with($path, 'api/')) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Server error',
