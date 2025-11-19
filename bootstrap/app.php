@@ -32,7 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         // Custom API exception handling
         $exceptions->render(function (\Illuminate\Validation\ValidationException $e, $request) {
-            if ($request->is('api/*')) {
+            if (str_starts_with($request->path(), 'api/')) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation failed',
