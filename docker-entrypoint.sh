@@ -35,10 +35,10 @@ if [ -z "$DB_HOST" ]; then
     fi
 fi
 
-# Wait for database to be ready (with timeout)
+# Wait for database to be ready (with shorter timeout, non-blocking)
 if [ -n "$DB_HOST" ] || [ -n "$MYSQL_HOST" ] || [ -n "$MYSQLHOST" ]; then
-    echo "Waiting for database connection..."
-    timeout=30
+    echo "Checking database connection..."
+    timeout=10
     counter=0
     until php artisan db:show > /dev/null 2>&1 || [ $counter -ge $timeout ]; do
         echo "Database is unavailable - sleeping ($counter/$timeout)"
@@ -47,24 +47,21 @@ if [ -n "$DB_HOST" ] || [ -n "$MYSQL_HOST" ] || [ -n "$MYSQLHOST" ]; then
     done
     
     if [ $counter -ge $timeout ]; then
-        echo "Warning: Database connection timeout. Continuing anyway..."
+        echo "Warning: Database connection timeout. Starting app anyway - migrations will run in background..."
     else
         echo "Database is up!"
+        # Run migrations if database is available
+        echo "Running migrations..."
+        php artisan migrate --force || echo "Migration failed, continuing..."
     fi
-fi
-
-# Run migrations (only if database is available)
-if php artisan db:show > /dev/null 2>&1; then
-    echo "Running migrations..."
-    php artisan migrate --force || echo "Migration failed, continuing..."
 else
-    echo "Skipping migrations (database not available)"
+    echo "No database configuration found, skipping database setup"
 fi
 
 # Create storage link
 php artisan storage:link || echo "Storage link already exists or failed"
 
-# Cache configuration (only in production)
+# Cache configuration (only in production) - run in background to not block startup
 if [ "$APP_ENV" = "production" ]; then
     echo "Caching configuration..."
     php artisan config:cache || echo "Config cache failed"
