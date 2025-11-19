@@ -16,7 +16,8 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'sqlite'),
+    // Default to mysql if DB_HOST is set, otherwise sqlite (for local dev)
+    'default' => env('DB_CONNECTION', env('DB_HOST') ? 'mysql' : 'sqlite'),
 
     /*
     |--------------------------------------------------------------------------

@@ -40,4 +40,48 @@ return Application::configure(basePath: dirname(__DIR__))
                 ], 422);
             }
         });
+        
+        // Handle database connection errors gracefully
+        $exceptions->render(function (\PDOException $e, $request) {
+            // For health check endpoints, return success even if DB is down
+            if ($request->is('health') || $request->is('api/health') || $request->is('/')) {
+                return response()->json([
+                    'status' => 'ok',
+                    'service' => 'Mazen Maher Chat API',
+                    'database' => 'unavailable',
+                    'message' => 'Database connection not available',
+                ], 200);
+            }
+            
+            // For other requests, return proper error
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Database connection error',
+                    'error' => $e->getMessage(),
+                ], 503);
+            }
+        });
+        
+        // Handle general database exceptions
+        $exceptions->render(function (\Illuminate\Database\QueryException $e, $request) {
+            // For health check endpoints, return success even if DB is down
+            if ($request->is('health') || $request->is('api/health') || $request->is('/')) {
+                return response()->json([
+                    'status' => 'ok',
+                    'service' => 'Mazen Maher Chat API',
+                    'database' => 'unavailable',
+                    'message' => 'Database connection not available',
+                ], 200);
+            }
+            
+            // For other requests, return proper error
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Database query error',
+                    'error' => $e->getMessage(),
+                ], 503);
+            }
+        });
     })->create();
