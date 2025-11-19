@@ -16,8 +16,8 @@ return [
     |
     */
 
-    // Default to mysql if DB_HOST is set, otherwise sqlite (for local dev)
-    'default' => env('DB_CONNECTION', env('DB_HOST') ? 'mysql' : 'sqlite'),
+    // Default to pgsql if DB_HOST is set, otherwise sqlite (for local dev)
+    'default' => env('DB_CONNECTION', env('DB_HOST') ? 'pgsql' : 'sqlite'),
 
     /*
     |--------------------------------------------------------------------------
@@ -96,7 +96,7 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
-            'sslmode' => 'prefer',
+            'sslmode' => env('DB_SSLMODE', 'require'),
         ],
 
         'sqlsrv' => [

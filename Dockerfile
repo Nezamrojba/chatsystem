@@ -53,7 +53,7 @@ RUN mkdir -p /var/www/html/storage/app/public \
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Expose port (Railway will provide PORT env var)
+# Expose port (Koyeb will provide PORT env var)
 EXPOSE 8000
 
 ENTRYPOINT ["docker-entrypoint.sh"]
