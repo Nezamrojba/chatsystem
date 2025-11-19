@@ -1,0 +1,30 @@
+<?php
+
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BatchController;
+use App\Http\Controllers\Api\ConversationController;
+use App\Http\Controllers\Api\MessageController;
+use Illuminate\Support\Facades\Route;
+
+// Public auth routes
+Route::post('register', [AuthController::class, 'register']);
+Route::post('login', [AuthController::class, 'login']);
+
+// Protected routes
+Route::middleware('auth:sanctum')->group(function () {
+    // Auth routes
+    Route::get('user', [AuthController::class, 'user']);
+    Route::post('logout', [AuthController::class, 'logout']);
+    
+    // Conversations routes
+    Route::apiResource('conversations', ConversationController::class);
+    Route::get('conversations/{conversation}/messages', [ConversationController::class, 'messages']);
+    
+    // Messages routes
+    Route::apiResource('messages', MessageController::class);
+    Route::post('messages/{message}/voice', [MessageController::class, 'uploadVoice']);
+    
+    // Batch operations (reduces API calls)
+    Route::post('batch/fetch', [BatchController::class, 'fetch']);
+});
+
