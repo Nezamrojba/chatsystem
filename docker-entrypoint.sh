@@ -82,10 +82,12 @@ php artisan storage:link || echo "Storage link already exists or failed"
 # Cache configuration (only in production)
 if [ "$APP_ENV" = "production" ]; then
     echo "Caching configuration..."
-    # Clear ALL caches first to avoid stale config
+    # Clear ALL caches first to avoid stale config (force clear)
+    php artisan optimize:clear 2>/dev/null || true
     php artisan config:clear 2>/dev/null || true
     php artisan route:clear 2>/dev/null || true
     php artisan view:clear 2>/dev/null || true
+    php artisan event:clear 2>/dev/null || true
     
     # Set BROADCAST_CONNECTION to null if not set and Reverb not configured
     if [ -z "$BROADCAST_CONNECTION" ] && [ -z "$REVERB_APP_KEY" ]; then
