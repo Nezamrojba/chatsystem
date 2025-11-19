@@ -36,7 +36,7 @@ if [ -z "$DB_HOST" ]; then
 fi
 
 # Wait for database to be ready (with timeout)
-if [ -n "$DB_HOST" ] || [ -n "$MYSQL_HOST" ]; then
+if [ -n "$DB_HOST" ] || [ -n "$MYSQL_HOST" ] || [ -n "$MYSQLHOST" ]; then
     echo "Waiting for database connection..."
     timeout=30
     counter=0
