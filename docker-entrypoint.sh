@@ -3,6 +3,19 @@ set -e
 
 echo "Starting application setup..."
 
+# Map Koyeb database variables to Laravel's expected names
+if [ -z "$DB_HOST" ] && [ -n "$DATABASE_HOST" ]; then
+    echo "Detected Koyeb database variables, mapping to Laravel format..."
+    export DB_CONNECTION=${DB_CONNECTION:-pgsql}
+    export DB_HOST=$DATABASE_HOST
+    export DB_PORT=${DATABASE_PORT:-5432}
+    export DB_DATABASE=$DATABASE_NAME
+    export DB_USERNAME=$DATABASE_USER
+    export DB_PASSWORD=$DATABASE_PASSWORD
+    export DB_SSLMODE=${DB_SSLMODE:-require}
+    echo "Database configured: $DB_HOST:$DB_PORT/$DB_DATABASE"
+fi
+
 # Wait for database to be ready
 if [ -n "$DB_HOST" ]; then
     echo "Checking database connection..."
