@@ -11,8 +11,6 @@ RUN apk add --no-cache \
     oniguruma-dev \
     postgresql-dev \
     mysql-client \
-    nodejs \
-    npm \
     supervisor
 
 # Install PHP extensions
@@ -35,12 +33,6 @@ COPY config/ ./config/
 
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
-
-# Copy package files
-COPY package.json package-lock.json* ./
-
-# Install Node dependencies
-RUN npm install && npm run build
 
 # Copy application files
 COPY . .
