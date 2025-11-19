@@ -21,11 +21,11 @@ services:
       - key: LOG_LEVEL
         value: error
       - key: DB_CONNECTION
-        sync: false
+        value: pgsql
       - key: DB_HOST
         sync: false
       - key: DB_PORT
-        sync: false
+        value: 5432
       - key: DB_DATABASE
         sync: false
       - key: DB_USERNAME
