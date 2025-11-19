@@ -57,24 +57,40 @@ else
     echo "DB_HOST already set to: $DB_HOST"
 fi
 
-# Wait for database to be ready (with shorter timeout, non-blocking)
+# Wait for database to be ready (with longer timeout for Railway)
 if [ -n "$DB_HOST" ]; then
     echo "Checking database connection..."
-    timeout=10
+    timeout=30
     counter=0
-    until php artisan db:show > /dev/null 2>&1 || [ $counter -ge $timeout ]; do
+    # Try simple connection test using mysql client or php
+    until php -r "
+        try {
+            \$pdo = new PDO('mysql:host='.getenv('DB_HOST').';port='.getenv('DB_PORT').';dbname='.getenv('DB_DATABASE'), getenv('DB_USERNAME'), getenv('DB_PASSWORD'));
+            \$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            \$pdo->query('SELECT 1');
+            exit(0);
+        } catch (Exception \$e) {
+            exit(1);
+        }
+    " 2>/dev/null || [ $counter -ge $timeout ]; do
         echo "Database is unavailable - sleeping ($counter/$timeout)"
-        sleep 1
-        counter=$((counter + 1))
+        sleep 2
+        counter=$((counter + 2))
     done
     
     if [ $counter -ge $timeout ]; then
-        echo "Warning: Database connection timeout. Starting app anyway - migrations will run in background..."
+        echo "Warning: Database connection timeout after ${timeout}s. Starting app anyway - migrations will run in background..."
+        # Try to run migrations in background anyway
+        (sleep 5 && php artisan migrate --force && php artisan db:seed --force || echo "Background migration/seed failed") &
     else
         echo "Database is up!"
         # Run migrations if database is available
         echo "Running migrations..."
         php artisan migrate --force || echo "Migration failed, continuing..."
+        
+        # Run seeders after migrations
+        echo "Running database seeders..."
+        php artisan db:seed --force || echo "Seeding failed, continuing..."
     fi
 else
     echo "No database configuration found, skipping database setup"
