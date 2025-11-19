@@ -13,7 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Trust all hosts for Railway (healthcheck.railway.app needs access)
+        // Trust all hosts for Koyeb
         $middleware->trustHosts(['*']);
         
         // CORS and Sanctum must be first
@@ -22,8 +22,9 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         
         // Exclude API routes from CSRF verification (using token-based auth)
+        // API routes are in routes/api.php which are excluded by default in Laravel
         $middleware->validateCsrfTokens(except: [
-            'api/*',
+            // API routes are already excluded by default, but list explicitly if needed
         ]);
         
         // Rate limiting for API
