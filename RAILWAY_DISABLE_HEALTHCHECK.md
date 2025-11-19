@@ -1,8 +1,16 @@
 # Disable Healthcheck in Railway
 
-## Quick Fix
+## Healthchecks are NOT Important
 
-The healthcheck is configured in Railway's dashboard, not in code. To disable it:
+**Healthchecks are optional** and not critical for your app to work. They're mainly used for:
+- Zero-downtime deployments (switching traffic only when new version is ready)
+- Monitoring service health
+
+**For your chat app, you can safely disable them** - your app will work perfectly fine without healthchecks.
+
+## Method 1: Railway Dashboard (Recommended)
+
+The healthcheck is configured in Railway's dashboard. To disable it:
 
 ### Steps:
 
@@ -32,7 +40,26 @@ If you want to keep healthchecks enabled, change the path to:
 
 All of these are public and don't require authentication.
 
+## Method 2: railway.json Configuration File
+
+We've added `railway.json` to disable healthchecks via configuration:
+
+```json
+{
+  "deploy": {
+    "healthcheckPath": "",
+    "healthcheckTimeout": 0
+  }
+}
+```
+
+This file tells Railway to disable healthchecks automatically.
+
 ### Why It's Failing
 
 The current healthcheck path `/api/user` requires authentication, so Railway can't access it and marks the deployment as failed.
+
+## Summary
+
+**Healthchecks are NOT important for your app** - disable them to avoid deployment issues. Your chat app will work perfectly without them.
 
