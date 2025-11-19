@@ -4,17 +4,28 @@ set -e
 echo "Starting application setup..."
 
 # Parse Railway MySQL configuration
+# Check if DB_HOST is already set, if not, try to get from Railway variables
 if [ -z "$DB_HOST" ]; then
-    # Try Railway individual variables first
-    if [ -n "$MYSQLHOST" ] || [ -n "$MYSQL_HOST" ]; then
+    # Try Railway individual variables first (most reliable)
+    if [ -n "$MYSQLHOST" ]; then
         echo "Detected Railway MySQL individual variables..."
         export DB_CONNECTION=${DB_CONNECTION:-mysql}
-        export DB_HOST=${MYSQLHOST:-$MYSQL_HOST}
-        export DB_PORT=${MYSQLPORT:-${MYSQL_PORT:-3306}}
-        export DB_DATABASE=${MYSQLDATABASE:-${MYSQL_DATABASE:-railway}}
-        export DB_USERNAME=${MYSQLUSER:-${MYSQL_USER:-root}}
-        export DB_PASSWORD=${MYSQLPASSWORD:-${MYSQL_PASSWORD:-$MYSQL_ROOT_PASSWORD}}
+        export DB_HOST=$MYSQLHOST
+        export DB_PORT=${MYSQLPORT:-3306}
+        export DB_DATABASE=${MYSQLDATABASE:-railway}
+        export DB_USERNAME=${MYSQLUSER:-root}
+        export DB_PASSWORD=${MYSQLPASSWORD:-$MYSQL_ROOT_PASSWORD}
         echo "MySQL connection configured from Railway variables: $DB_HOST:$DB_PORT/$DB_DATABASE"
+    # Fallback to MYSQL_HOST (alternative variable name)
+    elif [ -n "$MYSQL_HOST" ]; then
+        echo "Detected Railway MySQL variables (MYSQL_HOST)..."
+        export DB_CONNECTION=${DB_CONNECTION:-mysql}
+        export DB_HOST=$MYSQL_HOST
+        export DB_PORT=${MYSQL_PORT:-3306}
+        export DB_DATABASE=${MYSQL_DATABASE:-railway}
+        export DB_USERNAME=${MYSQL_USER:-root}
+        export DB_PASSWORD=${MYSQL_PASSWORD:-$MYSQL_ROOT_PASSWORD}
+        echo "MySQL connection configured: $DB_HOST:$DB_PORT/$DB_DATABASE"
     # Fallback to parsing MYSQL_URL
     elif [ -n "$MYSQL_URL" ]; then
         echo "Detected Railway MySQL URL, parsing connection details..."
@@ -32,11 +43,15 @@ if [ -z "$DB_HOST" ]; then
         export DB_USERNAME=$MYSQL_USER
         export DB_PASSWORD=$MYSQL_PASS
         echo "MySQL connection configured from Railway URL: $MYSQL_HOST:$MYSQL_PORT/$MYSQL_DB"
+    else
+        echo "No Railway MySQL variables found (MYSQLHOST, MYSQL_HOST, or MYSQL_URL)"
     fi
+else
+    echo "DB_HOST already set to: $DB_HOST"
 fi
 
 # Wait for database to be ready (with shorter timeout, non-blocking)
-if [ -n "$DB_HOST" ] || [ -n "$MYSQL_HOST" ] || [ -n "$MYSQLHOST" ]; then
+if [ -n "$DB_HOST" ]; then
     echo "Checking database connection..."
     timeout=10
     counter=0
@@ -61,13 +76,20 @@ fi
 # Create storage link
 php artisan storage:link || echo "Storage link already exists or failed"
 
-# Cache configuration (only in production) - run in background to not block startup
+# Cache configuration (only in production) - skip if Reverb not configured to avoid errors
 if [ "$APP_ENV" = "production" ]; then
     echo "Caching configuration..."
-    php artisan config:cache || echo "Config cache failed"
-    php artisan route:cache || echo "Route cache failed"
-    php artisan view:cache || echo "View cache failed"
-    php artisan event:cache || echo "Event cache failed"
+    # Only cache if Reverb is configured, otherwise skip to avoid errors
+    if [ -n "$REVERB_APP_KEY" ]; then
+        php artisan config:cache || echo "Config cache failed (Reverb may not be configured)"
+        php artisan route:cache || echo "Route cache failed"
+        php artisan view:cache || echo "View cache failed"
+        php artisan event:cache || echo "Event cache failed"
+    else
+        echo "Skipping config cache (Reverb not configured - this is OK)"
+        php artisan route:cache || echo "Route cache failed"
+        php artisan view:cache || echo "View cache failed"
+    fi
 fi
 
 # Start Laravel Reverb in background if REVERB_APP_KEY is set
