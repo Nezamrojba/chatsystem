@@ -27,9 +27,11 @@ WORKDIR /var/www/html
 # Copy composer files
 COPY composer.json composer.lock ./
 
-# Copy artisan and bootstrap directory (needed for composer post-autoload-dump)
+# Copy minimal files needed for composer post-autoload-dump
 COPY artisan ./
 COPY bootstrap/ ./bootstrap/
+COPY routes/ ./routes/
+COPY config/ ./config/
 
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist

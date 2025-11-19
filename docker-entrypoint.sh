@@ -3,8 +3,30 @@ set -e
 
 echo "Starting application setup..."
 
+# Parse Railway MySQL URL if provided
+if [ -n "$MYSQL_URL" ]; then
+    echo "Detected Railway MySQL URL, parsing connection details..."
+    # MYSQL_URL format: mysql://user:password@host:port/database
+    # Extract components using sed/awk
+    DB_USER=$(echo "$MYSQL_URL" | sed -n 's|.*://\([^:]*\):.*|\1|p')
+    DB_PASS=$(echo "$MYSQL_URL" | sed -n 's|.*://[^:]*:\([^@]*\)@.*|\1|p')
+    DB_HOST=$(echo "$MYSQL_URL" | sed -n 's|.*@\([^:]*\):.*|\1|p')
+    DB_PORT=$(echo "$MYSQL_URL" | sed -n 's|.*:\([0-9]*\)/.*|\1|p')
+    DB_NAME=$(echo "$MYSQL_URL" | sed -n 's|.*/\([^?]*\).*|\1|p')
+    
+    # Set environment variables if not already set
+    export DB_CONNECTION=${DB_CONNECTION:-mysql}
+    export DB_HOST=${DB_HOST:-$DB_HOST}
+    export DB_PORT=${DB_PORT:-$DB_PORT}
+    export DB_DATABASE=${DB_DATABASE:-$DB_NAME}
+    export DB_USERNAME=${DB_USERNAME:-$DB_USER}
+    export DB_PASSWORD=${DB_PASSWORD:-$DB_PASS}
+    
+    echo "MySQL connection configured from Railway"
+fi
+
 # Wait for database to be ready (with timeout)
-if [ -n "$DB_HOST" ]; then
+if [ -n "$DB_HOST" ] || [ -n "$MYSQL_HOST" ]; then
     echo "Waiting for database connection..."
     timeout=30
     counter=0

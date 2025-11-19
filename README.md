@@ -41,9 +41,9 @@ Laravel 12 backend API for real-time chat application with voice notes support.
    APP_KEY=base64:... (generate with: php artisan key:generate)
    APP_URL=https://your-service.onrender.com
    
-   DB_CONNECTION=pgsql
-   DB_HOST=your-postgres-host
-   DB_PORT=5432
+   DB_CONNECTION=mysql
+   DB_HOST=your-mysql-host
+   DB_PORT=3306
    DB_DATABASE=your-database-name
    DB_USERNAME=your-db-user
    DB_PASSWORD=your-db-password
