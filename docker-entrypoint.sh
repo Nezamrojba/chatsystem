@@ -88,6 +88,9 @@ if [ "$APP_ENV" = "production" ]; then
     php artisan route:clear 2>/dev/null || true
     php artisan view:clear 2>/dev/null || true
     php artisan event:clear 2>/dev/null || true
+    # Remove cached route files manually to ensure clean state
+    rm -f bootstrap/cache/routes-v7.php 2>/dev/null || true
+    rm -f bootstrap/cache/routes*.php 2>/dev/null || true
     
     # Set BROADCAST_CONNECTION to null if not set and Reverb not configured
     if [ -z "$BROADCAST_CONNECTION" ] && [ -z "$REVERB_APP_KEY" ]; then
