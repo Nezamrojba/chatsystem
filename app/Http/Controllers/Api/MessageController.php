@@ -219,15 +219,37 @@ class MessageController extends Controller
             // Get all participants except the sender
             $recipients = $conversation->users()->where('users.id', '!=', $senderId)->get();
             
+            \Log::info('Sending push notifications', [
+                'message_id' => $message->id,
+                'sender_id' => $senderId,
+                'recipients_count' => $recipients->count(),
+                'recipients_with_tokens' => $recipients->whereNotNull('fcm_token')->count()
+            ]);
+            
             // Send push notification to each recipient
             foreach ($recipients as $recipient) {
                 if ($recipient->fcm_token) {
-                    $pushService->sendToUser($recipient, $message);
+                    \Log::info('Sending push to user', [
+                        'user_id' => $recipient->id,
+                        'fcm_token_exists' => !empty($recipient->fcm_token)
+                    ]);
+                    $result = $pushService->sendToUser($recipient, $message);
+                    \Log::info('Push notification result', [
+                        'user_id' => $recipient->id,
+                        'success' => $result
+                    ]);
+                } else {
+                    \Log::warning('User has no FCM token', [
+                        'user_id' => $recipient->id
+                    ]);
                 }
             }
         } catch (\Exception $e) {
             // Log error but don't fail the message creation
-            \Log::error('Failed to send push notifications: ' . $e->getMessage());
+            \Log::error('Failed to send push notifications: ' . $e->getMessage(), [
+                'exception' => get_class($e),
+                'trace' => $e->getTraceAsString()
+            ]);
         }
     }
 }

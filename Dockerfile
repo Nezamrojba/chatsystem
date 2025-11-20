@@ -37,6 +37,24 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-di
 # Copy application files
 COPY . .
 
+# Create Firebase storage directory
+RUN mkdir -p /var/www/html/storage/firebase && \
+    chown -R www-data:www-data /var/www/html/storage/firebase && \
+    chmod 755 /var/www/html/storage/firebase
+
+# Copy Firebase credentials if they exist in build context
+# Note: File is in .gitignore, so for Git-based builds (like Koyeb), 
+# the file won't be in the build context. Use FIREBASE_CREDENTIALS_JSON env var instead.
+# For local builds with file present, this will copy it
+RUN if [ -d storage/firebase ] && [ -n "$(ls -A storage/firebase/*.json 2>/dev/null)" ]; then \
+        cp storage/firebase/*.json /var/www/html/storage/firebase/ && \
+        chmod 600 /var/www/html/storage/firebase/*.json && \
+        chown www-data:www-data /var/www/html/storage/firebase/*.json && \
+        echo "Firebase credentials copied to container"; \
+    else \
+        echo "Firebase JSON not in build context (expected for Git-based builds - use FIREBASE_CREDENTIALS_JSON env var)"; \
+    fi
+
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/storage \

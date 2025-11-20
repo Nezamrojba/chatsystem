@@ -29,6 +29,17 @@ class PushNotificationService
 
             $credentials = $projectConfig['credentials'] ?? null;
             
+            // Also check for base64 encoded JSON in environment variable (for Koyeb)
+            if (!$credentials && env('FIREBASE_CREDENTIALS_JSON')) {
+                $credentialsJson = base64_decode(env('FIREBASE_CREDENTIALS_JSON'));
+                if ($credentialsJson) {
+                    // Create temporary file for Firebase SDK
+                    $tempFile = sys_get_temp_dir() . '/firebase-credentials-' . uniqid() . '.json';
+                    file_put_contents($tempFile, $credentialsJson);
+                    $credentials = $tempFile;
+                }
+            }
+            
             if (!$credentials) {
                 Log::warning('Firebase credentials not configured. Push notifications will be disabled.');
                 $this->messaging = null;
@@ -38,8 +49,17 @@ class PushNotificationService
             $factory = new Factory();
             
             // Use service account JSON file if provided
-            if ($credentials && file_exists($credentials)) {
-                $factory->withServiceAccount($credentials);
+            // Handle both absolute and relative paths
+            $credentialsPath = $credentials;
+            
+            // If relative path, make it absolute from base_path
+            if ($credentials && !file_exists($credentials) && !str_starts_with($credentials, '/')) {
+                $credentialsPath = base_path($credentials);
+            }
+            
+            if ($credentialsPath && file_exists($credentialsPath)) {
+                $factory->withServiceAccount($credentialsPath);
+                Log::info('Firebase credentials loaded', ['path' => $credentialsPath]);
             } elseif ($credentials) {
                 // Try to use credentials as-is (might be JSON string or path)
                 $factory->withServiceAccount($credentials);
@@ -100,7 +120,14 @@ class PushNotificationService
                 ->withDefaultSounds()
                 ->withHighPriority();
 
-            $this->messaging->send($cloudMessage);
+            $result = $this->messaging->send($cloudMessage);
+            
+            Log::info('Push notification sent successfully', [
+                'user_id' => $user->id,
+                'message_id' => $message->id,
+                'fcm_token' => substr($user->fcm_token, 0, 20) . '...',
+                'result' => $result
+            ]);
 
             return true;
         } catch (\Exception $e) {
@@ -133,4 +160,3 @@ class PushNotificationService
         return $sent;
     }
 }
-
