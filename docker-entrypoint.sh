@@ -16,6 +16,18 @@ if [ -z "$DB_HOST" ] && [ -n "$DATABASE_HOST" ]; then
     echo "Database configured: $DB_HOST:$DB_PORT/$DB_DATABASE"
 fi
 
+# Generate APP_KEY if not set (required for Laravel encryption)
+if [ -z "$APP_KEY" ]; then
+    echo "APP_KEY not set, generating..."
+    php artisan key:generate --force || echo "Warning: Failed to generate APP_KEY"
+fi
+
+# Set defaults for required Laravel variables
+export APP_ENV=${APP_ENV:-production}
+export APP_DEBUG=${APP_DEBUG:-false}
+export APP_NAME=${APP_NAME:-"Mazen Maher Chat"}
+export BROADCAST_CONNECTION=${BROADCAST_CONNECTION:-null}
+
 # Wait for database to be ready
 if [ -n "$DB_HOST" ]; then
     echo "Checking database connection..."
