@@ -16,10 +16,10 @@ return [
     */
 
     'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', sprintf(
-        '%s%s',
+        '%s%s%s',
         'localhost,localhost:3000,localhost:9000,127.0.0.1,127.0.0.1:8000,127.0.0.1:9000,::1',
+        ',straight-grazia-nezam-74b0170a.koyeb.app',
         Sanctum::currentApplicationUrlWithPort(),
-        // Sanctum::currentRequestHost(),
     ))),
 
     /*

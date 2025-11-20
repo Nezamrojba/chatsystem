@@ -10,6 +10,7 @@ return [
         'http://127.0.0.1:9000',
         'http://localhost:3000',
         'http://127.0.0.1:3000',
+        'https://straight-grazia-nezam-74b0170a.koyeb.app',
         env('FRONTEND_URL', 'http://localhost:9000'),
     ],
 
