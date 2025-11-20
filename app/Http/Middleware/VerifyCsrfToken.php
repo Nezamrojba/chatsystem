@@ -12,7 +12,7 @@ class VerifyCsrfToken extends Middleware
      * Note: API routes in routes/api.php are excluded by default in Laravel.
      */
     protected $except = [
-        // API routes are excluded by default
+        'api/*', // Exclude all API routes from CSRF (using token auth)
     ];
 }
 
