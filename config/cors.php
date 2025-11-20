@@ -14,9 +14,7 @@ return [
         env('FRONTEND_URL', 'http://localhost:9000'),
     ],
 
-    'allowed_origins_patterns' => [
-        '*', // Allow all origins (including null for Android apps)
-    ],
+    'allowed_origins_patterns' => [],
 
     'allowed_headers' => ['*'],
 

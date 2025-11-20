@@ -28,6 +28,10 @@ export APP_DEBUG=${APP_DEBUG:-false}
 export APP_NAME=${APP_NAME:-"Mazen Maher Chat"}
 export BROADCAST_CONNECTION=${BROADCAST_CONNECTION:-null}
 
+# Use file-based cache and sessions to avoid database quota issues
+export CACHE_STORE=${CACHE_STORE:-file}
+export SESSION_DRIVER=${SESSION_DRIVER:-file}
+
 # Wait for database to be ready
 if [ -n "$DB_HOST" ]; then
     echo "Checking database connection..."
@@ -95,11 +99,13 @@ php artisan storage:link || echo "Storage link already exists or failed"
 if [ "$APP_ENV" = "production" ]; then
     echo "Caching configuration..."
     # Clear ALL caches first to avoid stale config (force clear)
+    # Use file-based cache to avoid database quota issues
     php artisan optimize:clear 2>/dev/null || true
     php artisan config:clear 2>/dev/null || true
     php artisan route:clear 2>/dev/null || true
     php artisan view:clear 2>/dev/null || true
     php artisan event:clear 2>/dev/null || true
+    php artisan cache:clear 2>/dev/null || true
     # Remove cached route files manually to ensure clean state
     rm -f bootstrap/cache/routes-v7.php 2>/dev/null || true
     rm -f bootstrap/cache/routes*.php 2>/dev/null || true
