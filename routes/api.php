@@ -34,6 +34,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('user', [AuthController::class, 'user']);
     Route::post('logout', [AuthController::class, 'logout']);
     
+    // Device/FCM token routes
+    Route::post('device/register-token', [\App\Http\Controllers\Api\DeviceController::class, 'registerToken']);
+    Route::post('device/remove-token', [\App\Http\Controllers\Api\DeviceController::class, 'removeToken']);
+    
     // Conversations routes
     Route::apiResource('conversations', ConversationController::class);
     Route::get('conversations/{conversation}/messages', [ConversationController::class, 'messages']);

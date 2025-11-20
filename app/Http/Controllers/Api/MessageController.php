@@ -11,6 +11,7 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Services\CacheService;
 use App\Services\CompressionService;
+use App\Services\PushNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -81,9 +82,15 @@ class MessageController extends Controller
         }
 
         $message = Message::create($data);
+        
+        // Load user relationship for push notifications
+        $message->load('user');
 
         // Update conversation last message timestamp
         $conversation->update(['last_message_at' => now()]);
+        
+        // Reload conversation with users for push notifications
+        $conversation->load('users');
 
         // Invalidate cache for all conversation participants
         foreach ($conversation->users as $user) {
@@ -92,7 +99,10 @@ class MessageController extends Controller
         CacheService::invalidateMessages($conversation->id);
 
         // Broadcast message event
-        broadcast(new MessageSent($message->load('user')))->toOthers();
+        broadcast(new MessageSent($message))->toOthers();
+
+        // Send push notifications to other participants (not the sender)
+        $this->sendPushNotifications($message, $conversation, $userId);
 
         return response()->json(new MessageResource($message->load('user')), 201);
     }
@@ -196,5 +206,28 @@ class MessageController extends Controller
         CacheService::invalidateMessages($message->conversation_id);
 
         return response()->json(new MessageResource($message->load('user')));
+    }
+
+    /**
+     * Send push notifications to conversation participants (except sender)
+     */
+    protected function sendPushNotifications(Message $message, Conversation $conversation, int $senderId): void
+    {
+        try {
+            $pushService = app(PushNotificationService::class);
+            
+            // Get all participants except the sender
+            $recipients = $conversation->users()->where('users.id', '!=', $senderId)->get();
+            
+            // Send push notification to each recipient
+            foreach ($recipients as $recipient) {
+                if ($recipient->fcm_token) {
+                    $pushService->sendToUser($recipient, $message);
+                }
+            }
+        } catch (\Exception $e) {
+            // Log error but don't fail the message creation
+            \Log::error('Failed to send push notifications: ' . $e->getMessage());
+        }
     }
 }
