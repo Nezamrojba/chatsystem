@@ -49,11 +49,11 @@ class ConversationController extends Controller
 
         // Check if private conversation already exists
         if ($request->type === 'private' && count($userIds) === 2) {
+            // PostgreSQL-compatible query: use subquery instead of HAVING with alias
             $existing = Conversation::private()
                 ->whereHas('users', fn($q) => $q->where('users.id', $userIds[0]))
                 ->whereHas('users', fn($q) => $q->where('users.id', $userIds[1]))
-                ->withCount('users')
-                ->having('users_count', '=', 2)
+                ->whereRaw('(select count(*) from conversation_user where conversation_user.conversation_id = conversations.id) = 2')
                 ->first();
 
             if ($existing) {
