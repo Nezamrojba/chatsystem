@@ -21,11 +21,8 @@ return Application::configure(basePath: dirname(__DIR__))
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);
         
-        // Exclude API routes from CSRF verification (using token-based auth)
-        // API routes are in routes/api.php which are excluded by default in Laravel
-        $middleware->validateCsrfTokens(except: [
-            // API routes are already excluded by default, but list explicitly if needed
-        ]);
+        // API routes in routes/api.php are excluded from CSRF by default in Laravel
+        // Web routes use Sanctum's stateful API which handles CSRF automatically
         
         // Rate limiting for API
         $middleware->throttleApi('60,1');
