@@ -13,13 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // CORS and Sanctum must be first
-        $middleware->api(prepend: [
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-        ]);
-        
-        // API routes in routes/api.php are excluded from CSRF by default in Laravel
-        // Web routes use Sanctum's stateful API which handles CSRF automatically
+        // API routes use token-based authentication (stateless) - no CSRF needed
+        // Do NOT use EnsureFrontendRequestsAreStateful for API routes
+        // That middleware is only for web routes that use cookie-based auth
         
         // Rate limiting for API
         $middleware->throttleApi('60,1');
